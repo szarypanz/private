@@ -484,7 +484,7 @@ def create_report_file():
 
     # Copying data (dates, names) from Settings
     print('updating template...')
-    sheet = template.active
+    sheet = template['Introduction']
     sheet['B1'].value = '2019 {} - Problematic Companies'.format(SurveyFullName)
     sheet['D32'].value = SubmissionDeadline
     sheet['D33'].value = InternalDeadline
