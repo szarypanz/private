@@ -62,7 +62,7 @@ Application.CutCopyMode = False
 Range("A1").Select
 
 
-'''' rest of the tabs
+'''' rest of the tabs (would loop through it but im not feelin like it rn, dunno)
 ActiveWorkbook.Worksheets("Excluded Entities").Activate 'copying formats for Excluded Entities tab
 If Range("A5") > 0 Then
     With ActiveSheet
