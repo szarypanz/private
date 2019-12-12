@@ -1,19 +1,15 @@
 
-
 ##############################################################################
 #                                                                            #
 # Early setup - necessary packages etc                                       #
 #                                                                            #
 ##############################################################################
 
-
 import os
 import pandas as pd
-import numpy as np
 import openpyxl as pyxl
 import datetime
-#jakies tam paczki jesli dojda
-
+import sys
 
 ##############################################################################
 #                                                                            #
@@ -24,17 +20,22 @@ import datetime
 #                                                                            #
 ##############################################################################
 
+# script can be initialized by typing:
+# python H:\EXAMPLE\EXAMPLE\EXAMPLE script.py
+# in anaconda prompt; make sure that folder in that line contains also
+# settings and all exported queries
 
-Setup = pd.read_excel('Settings.xlsx')
-
-os.chdir(Setup.iloc[10,2])
+# setting working directory to the location of .py script file
+os.chdir(os.path.dirname(sys.argv[0]))
+Path = os.getcwd()
+    
+Setup = pd.read_excel('Settings.xlsm')
 SurveyFullName = Setup.iloc[9,2]
 Output = Setup.iloc[11,2]
 TemplateName = Setup.iloc[12,2]
 SubmissionDeadline = Setup.iloc[13,2].date()
 InternalDeadline = Setup.iloc[14,2].date()
 QAD = Setup.iloc[15,2].date()
-
 ExcEntities_YN = Setup.iloc[19,2]
 ExcIncumbents_YN = Setup.iloc[20,2]
 AGCRematches_YN = Setup.iloc[21,2]
@@ -43,10 +44,9 @@ MultipleYTAll_YN = Setup.iloc[23,2]
 Deadlines_YN = Setup.iloc[24,2]
 QAD_YN = Setup.iloc[25,2]
 
-Path = os.getcwd()
-FileNames = Setup.iloc[28:37,2].tolist()
+FileNames = Setup.iloc[28:35,2].tolist()
 ReportName = 'Problematic Companies {} - report.xlsx'.format(SurveyFullName)
-TemplatePath = '{}\\{}'.format(Path, TemplateName)
+TemplatePath = os.path.join(Path,TemplateName)
 
 Summary = []
 ExcEntitiesData = []
@@ -57,10 +57,8 @@ MultipleYTPositionsData = []
 MultipleYTPositionsAll = []
 AfterDeadlinesData = []
 MDAData = []
-MDAList = []
-ContactData = []
 
-tresholds = Setup.iloc[0:8,22:25]
+tresholds = Setup.iloc[0:8,20:23]
 
 
 # function responsible for loading data from exported GST queries
@@ -69,38 +67,31 @@ def import_xlsx_files(Path):
     print('getting data from excel files...')
     
     global Summary
-    Summary = pd.read_excel(Path + '\\{}'.format(FileNames[1]))
+    Summary = pd.read_excel(os.path.join(Path, FileNames[0]))
 
     global ExcEntitiesData
-    if ExcEntities_YN == 'Y' and pd.notna(FileNames[2]):
-        ExcEntitiesData = pd.read_excel(Path + '\\{}'.format(FileNames[2]))
+    if ExcEntities_YN == 'Y' and pd.notna(FileNames[1]):
+        ExcEntitiesData = pd.read_excel(os.path.join(Path, FileNames[1]))
 
     global ExcReasonData   
-    if ExcEntities_YN == 'Y' and pd.notna(FileNames[3]):
-        ExcReasonData = pd.read_excel(Path + '\\{}'.format(FileNames[3]))
+    if ExcEntities_YN == 'Y' and pd.notna(FileNames[2]):
+        ExcReasonData = pd.read_excel(os.path.join(Path, FileNames[2]))
 
     global ExcIncumbentsData    
-    if ExcIncumbents_YN == 'Y' and pd.notna(FileNames[4]):
-        ExcIncumbentsData = pd.read_excel(Path + '\\{}'.format(FileNames[4]))
+    if ExcIncumbents_YN == 'Y' and pd.notna(FileNames[3]):
+        ExcIncumbentsData = pd.read_excel(os.path.join(Path, FileNames[3]))
 
     global AGCRematchesData     
-    if AGCRematches_YN == 'Y' and pd.notna(FileNames[5]):
-        AGCRematchesData = pd.read_excel(Path + '\\{}'.format(FileNames[5]))
+    if AGCRematches_YN == 'Y' and pd.notna(FileNames[4]):
+        AGCRematchesData = pd.read_excel(os.path.join(Path, FileNames[4]))
 
     global MultipleYTPositionsData    
-    if MultipleYTPos_YN == 'Y' and pd.notna(FileNames[6]):
-        MultipleYTPositionsData = pd.read_excel(Path + '\\{}'.format(FileNames[6]))
+    if MultipleYTPos_YN == 'Y' and pd.notna(FileNames[5]):
+        MultipleYTPositionsData = pd.read_excel(os.path.join(Path, FileNames[5]))
 
     global MultipleYTPositionsAll        
-    if MultipleYTAll_YN == 'Y' and pd.notna(FileNames[7]):
-        MultipleYTPositionsAll = pd.read_excel(Path + '\\{}'.format(FileNames[7]))
-
-    global MDAList
-    if QAD_YN == 'Y' and pd.notna(FileNames[8]):
-        MDAList = pd.read_excel(Path + '\\{}'.format(FileNames[8]))
-
-    global ContactData
-    ContactData = pd.read_excel(Path + '\\{}'.format(FileNames[0]))
+    if MultipleYTAll_YN == 'Y' and pd.notna(FileNames[6]):
+        MultipleYTPositionsAll = pd.read_excel(os.path.join(Path, FileNames[6]))
 
     print('done!')
 
@@ -108,24 +99,18 @@ def import_xlsx_files(Path):
 ##############################################################################
 #                                                                            #
 # Main body                                                                  #
-#   functions                                                                #
 #   data transformations                                                     #
 #   final XLSX file creations                                                #
 #                                                                            #
 ##############################################################################
 
-    
 # making sure columns are named correctly - e.g for surveys that are using
 # CPY_CODE instead of CO_CODE2 etc etc etc
 def make_names_standard():
 
     global Summary
-    SummaryColumns = Setup.iloc[0:9]['SummaryColumns']
+    SummaryColumns = Setup.iloc[0:12]['SummaryColumns']
     Summary.columns = SummaryColumns.dropna()
-
-    global ContactData
-    ContactColumns = Setup.iloc[0:13]['ContactColumns']
-    ContactData.columns = ContactColumns.dropna()
 
     if ExcEntities_YN == 'Y':
         global ExcEntitiesData
@@ -156,11 +141,6 @@ def make_names_standard():
         MultipleYTAllColumns = Setup.iloc[0:8]['MultipleYTAllColumns']
         MultipleYTPositionsAll.columns = MultipleYTAllColumns.dropna()
 
-    if QAD_YN == 'Y':
-        global MDAList
-        MDAColumns = Setup.iloc[0:5]['MDAColumns']
-        MDAList.columns = MDAColumns.dropna()        
-
 
 #   Excluded Entities sheet - adding perc of excluded entities
 #   and filtering out records below the treshold:
@@ -168,31 +148,38 @@ def create_excluded_entities():
     if ExcEntities_YN == 'Y':
         global ExcEntitiesData
         
-        ExcEntitiesData = ExcEntitiesData[ExcEntitiesData.SUBMITTED >= tresholds.iloc[1,2]]
-        
+        ExcEntitiesData = ExcEntitiesData[ExcEntitiesData.SUBMITTED 
+                                          >= tresholds.iloc[1,2]]
+
         ExcEntitiesData.loc[:,'EXCLUDED_PERC'] = round(
             ExcEntitiesData['EXCLUDED'] / 
             ExcEntitiesData['SUBMITTED'], 2)
         
-        ExcEntitiesData = ExcEntitiesData[ExcEntitiesData.EXCLUDED_PERC >= tresholds.iloc[0,2]]
+        ExcEntitiesData = ExcEntitiesData[ExcEntitiesData.EXCLUDED_PERC 
+                                          >= tresholds.iloc[0,2]]
 
 
 # preparing clean Exclude reasons
 # matching them with Excluded Entities 
 def create_exclude_reasons():
     if ExcEntities_YN == 'Y':
+        
+        global ExcReasonData
         ExcReasonData['EXCLUDE_REASON'] = ExcReasonData['EXCLUDE_REASON'].fillna(value = 'Unspecified exclude reason')
         ExcReasonData['CO_NAME2'] = ExcReasonData['CO_NAME2'].fillna(value = 'Unnamed Entity')    
         ExcReasonData['EXCLUDE_REASON'] = ExcReasonData['CO_NAME2']+": "+ExcReasonData['EXCLUDE_REASON']
 
-    global ExcEntitiesData
-    for x in ExcReasonData['SUBMISSIONID'].unique():
-        data = ExcReasonData.loc[ExcReasonData['SUBMISSIONID'] == x]
-        sep = (';'+'\n')
-        z = sep.join(data['EXCLUDE_REASON'])
-        ExcEntitiesData.loc[ExcEntitiesData['CONTACT_SUBMISSIONID'] == x, 
+        global ExcEntitiesData
+        for x in ExcReasonData['SUBMISSIONID'].unique():
+            data = ExcReasonData.loc[ExcReasonData['SUBMISSIONID'] == x]
+            sep = (';'+'\n')
+            z = sep.join(data['EXCLUDE_REASON'])
+            ExcEntitiesData.loc[ExcEntitiesData['CONTACT_SUBMISSIONID'] == x, 
                                      'EXCLUDE_REASON'] = z
-        ExcEntitiesData['EXCLUDE_REASON'].fillna(value = '',inplace = True)
+            ExcEntitiesData['EXCLUDE_REASON'].fillna(value = '',inplace = True)
+
+        # removing Reasons dataframe to clean up some memory
+        del ExcReasonData
 
 
 # calculating Excluded Incumbents data, applying tresholds to data
@@ -209,14 +196,18 @@ def create_excluded_incumbents():
         y = 0
         for x in ExcIncumbentsData.EF_2_COUNT:
             if x > 0:
-                ExcIncumbentsData.loc[y,"dupl_perc"] = ExcIncumbentsData.iloc[y,12] /sum(ExcIncumbentsData.iloc[y,9:38])
+                ExcIncumbentsData.loc[y,"dupl_perc"] = (ExcIncumbentsData.iloc[y,12] 
+                /sum(ExcIncumbentsData.iloc[y,9:38]))
             else:
                 ExcIncumbentsData.loc[y,"dupl_perc"] = 0
             y = y + 1
         
-        ExcIncumbentsData = ExcIncumbentsData[ExcIncumbentsData.ALLINCUMBENTS >= tresholds.iloc[3,2]]
-        ExcIncumbentsData = ExcIncumbentsData[ExcIncumbentsData.EXCLUDED_PERC >= tresholds.iloc[2,2]]
-        ExcIncumbentsData = ExcIncumbentsData[ExcIncumbentsData.dupl_perc <= tresholds.iloc[4,2]]
+        ExcIncumbentsData = ExcIncumbentsData[ExcIncumbentsData.ALLINCUMBENTS 
+                                              >= tresholds.iloc[3,2]]
+        ExcIncumbentsData = ExcIncumbentsData[ExcIncumbentsData.EXCLUDED_PERC 
+                                              >= tresholds.iloc[2,2]]
+        ExcIncumbentsData = ExcIncumbentsData[ExcIncumbentsData.dupl_perc 
+                                              <= tresholds.iloc[4,2]]
         ExcIncumbentsData = ExcIncumbentsData.drop(columns = 'dupl_perc')
 
 
@@ -224,26 +215,20 @@ def create_excluded_incumbents():
 def create_YTPos():
     if MultipleYTPos_YN == 'Y':
         global MultipleYTPositionsData
-
-        MultipleYTPositionsData = MultipleYTPositionsData[MultipleYTPositionsData.UNIQUEYOURTITLE >= tresholds.iloc[5,2]]
+        MultipleYTPositionsData = MultipleYTPositionsData[MultipleYTPositionsData.UNIQUEYOURTITLE 
+                                                          >= tresholds.iloc[5,2]]
 
 
 def create_YTAll():        
     if MultipleYTAll_YN == 'Y':
         global MultipleYTPositionsAll
+        # creating temporary object to apply treshold 
         Titles = MultipleYTPositionsAll.YOUR_TITLE.value_counts().to_frame()
-        Titles = Titles.YOUR_TITLE[Titles.YOUR_TITLE >= tresholds.iloc[6,2]]        
-        
-        y = 0
-        for x in MultipleYTPositionsAll.YOUR_TITLE:
-            if x in Titles:
-                MultipleYTPositionsAll.loc[y,'treshold'] = 'keep'
-            else:
-                MultipleYTPositionsAll.loc[y,'treshold'] = 'remove'
-            y = y + 1
+        Titles = Titles.YOUR_TITLE[Titles.YOUR_TITLE >= tresholds.iloc[6,2]].to_frame()   
+        Titles['YOUR_TITLE'] = Titles.index
 
-        MultipleYTPositionsAll = MultipleYTPositionsAll[MultipleYTPositionsAll.treshold == 'keep']
-        MultipleYTPositionsAll = MultipleYTPositionsAll.drop(columns = 'treshold')
+        # filtering final DF whit Titles that are fullfiling treshold criteria 
+        MultipleYTPositionsAll = MultipleYTPositionsAll[MultipleYTPositionsAll['YOUR_TITLE'].isin(Titles['YOUR_TITLE'])]
 
 
 # Creating Data for 'Deadlines' tab - downloading CONTACT info and calculating
@@ -256,7 +241,7 @@ def date_convert(gst_date):
 def create_after_deadline():
     if Deadlines_YN == 'Y':
         global AfterDeadlinesData
-        AfterDeadlinesData = ContactData.loc[:,['SUBMISSIONID', 'CO_CODE1',
+        AfterDeadlinesData = Summary.loc[:,['SUBMISSIONID', 'CO_CODE1',
                                           'CONTACTNAME','CO_NAME1','CN_TITLE',
                                           'CN_PHONE','CONTACTEMAIL',
                                           'IMPORTDATE',]]
@@ -272,7 +257,7 @@ def create_after_deadline():
     AfterDeadlinesData['checkINT'] = AfterDeadlinesData['IMPORTDATE'] - InternalDeadline
     AfterDeadlinesData['checkINT'] = AfterDeadlinesData['checkINT'].dt.days
     
-    # creating columns in which we will store data about type of delay
+    # creating columns in which we will store data about the type of delay
     AfterDeadlinesData['DEADLINE_BREACH'] = ''
     AfterDeadlinesData['DELAY'] = ''
     
@@ -306,10 +291,14 @@ def create_after_deadline():
 def create_mda():
     if QAD_YN == 'Y':
         global MDAData
-        MDAData = ContactData.loc[:,['SUBMISSIONID', 'CO_CODE1',
+        MDAData = Summary.loc[:,['SUBMISSIONID', 'CO_CODE1', 'MERCER_ACTION',
                                           'CONTACTNAME','CO_NAME1','CN_TITLE',
                                           'CN_PHONE','CONTACTEMAIL',
                                           'RETURNED_SAW',]]
+        
+        # Removing rows with no date (some records in MBD had those)
+        MDAData = MDAData[~MDAData['RETURNED_SAW'].isnull()]
+
         # converting DVF date into more readable format
         for x in MDAData['RETURNED_SAW']:
             MDAData.loc[MDAData['RETURNED_SAW'] == x,
@@ -323,37 +312,31 @@ def create_mda():
         MDAData['QAD_BREACH'] = ''
         y = 0
         for x in MDAData['SUBMISSIONID']:
-            qad_check = MDAData.iloc[y,8]
-            if qad_check > tresholds.iloc[7,2]:   # cutoff as per CST Treshold
-                MDAData.iloc[y,9] = "Y"
+            qad_check = MDAData.iloc[y,9]
+            if qad_check > int(tresholds.iloc[7,2]):   #cutoff as per Treshold
+                MDAData.iloc[y,10] = "Y"
             else:
-                MDAData.iloc[y,9] = "N"
+                MDAData.iloc[y,10] = "N"
             y = y + 1
             
-        # checking if we applied MDA to any submission and applying that info
-        # to our main dataframe
-        global MDAList
-        MDAList['MDA_APPLY'] = 'Y'
-        MDAList = MDAList.filter(items=['SUBMISSIONID_join','MDA_APPLY'])
-        MDAData = MDAData.merge(MDAList,left_on="SUBMISSIONID",
-                     right_on="SUBMISSIONID_join",
-                     how='outer')
-        
+        # Preparing MDA Y/N column
+        MDAData['MERCER_ACTION'] = MDAData['MERCER_ACTION'].replace(1,'Y')
+        MDAData['MERCER_ACTION'].fillna(value = 'N', inplace = True)
+
         # filtering out records which are neither afterQAD / MDA,
         # sorting, removing technical columns etc
-        MDAData['MDA_APPLY'].fillna(value = 'N', inplace = True)
-        MDAData['remove_col'] = MDAData['MDA_APPLY'] + MDAData['QAD_BREACH']
+        MDAData['remove_col'] = MDAData['MERCER_ACTION'] + MDAData['QAD_BREACH']
         MDAData = MDAData[MDAData.remove_col != "NN"]
-        MDAData = MDAData.drop(columns = ['SUBMISSIONID_join','remove_col'])
+        MDAData = MDAData.drop(columns = 'remove_col')
         ColumnOrder = Setup.iloc[0:11]['MDAOrder'].tolist()
         MDAData = MDAData[ColumnOrder]
 
 
 # INSERTING CONTACT DATA
-# Function that will identify which sheets need to be updated with Contact data
+# Function that'll identify which sheets need to be updated with Contact data
 # then paste it and rearrange columns in correct order
 def create_contact_details():    
-    ContactSlice = ContactData.loc[:,['SUBMISSIONID', 'CONTACTNAME',
+    ContactSlice = Summary.loc[:,['SUBMISSIONID', 'CONTACTNAME',
                            'CN_TITLE','CN_PHONE','CONTACTEMAIL']]
     
     if ExcEntities_YN == 'Y':
@@ -436,18 +419,23 @@ def create_summary():
         Summary = Summary.drop(columns = 'SOURCE_ORGDATA_SUBMISSIONID')
     else:
         Summary.loc[:,'OBJECTID_COUNT'] = 'n/a'
-        
+
     # ...YTitle data...
     if MultipleYTPos_YN == 'Y':
         YTSlice = MultipleYTPositionsData.loc[:,['ORGDATA_SUBMISSIONID',
                                               'UNIQUEYOURTITLE']]
-        Summary = Summary.merge(YTSlice, left_on = 'SUBMISSIONID',
-                                right_on = 'ORGDATA_SUBMISSIONID',
+        # in Ytitles stats are by YOUR_TITLE etc, with duplicated SubIDs,
+        # so we have to prepare a list of unique values
+        z = YTSlice.iloc[:,0].value_counts().to_frame()
+        z['SUBMISSIONID'] = z.index
+        Summary = Summary.merge(z, left_on = 'SUBMISSIONID',
+                                right_on = 'SUBMISSIONID',
                                 how = 'left')
-        Summary = Summary.drop(columns = 'ORGDATA_SUBMISSIONID')
+        Summary = Summary.rename(columns = 
+                                 {'ORGDATA_SUBMISSIONID':'UNIQUEYOURTITLE'})
     else:
         Summary.loc[:,'UNIQUEYOURTITLE'] = 'n/a'
-        
+
     # ...Deadlines...
     if Deadlines_YN == 'Y':
         DeadlinesSlice = AfterDeadlinesData.loc[:,['SUBMISSIONID',
@@ -457,22 +445,24 @@ def create_summary():
                                 how = 'left')
     else:
         Summary.loc[:,'DEADLINE_BREACH'] = 'n/a'
-     
+
     #...QAD...
     if QAD_YN == 'Y':
-        QADSlice = MDAData.loc[:,['SUBMISSIONID','DELAY','MDA_APPLY']]
+        Summary = Summary.drop(columns = 'MERCER_ACTION')
+        QADSlice = MDAData.loc[:,['SUBMISSIONID','DELAY','MERCER_ACTION']]
         Summary = Summary.merge(QADSlice, left_on = 'SUBMISSIONID',
                                 right_on = 'SUBMISSIONID',
                                 how = 'left')
     else:
         Summary.loc[:,'DELAY'] = 'n/a'
-        Summary.loc[:,'MDA_APPLY'] = 'n/a'
-        
+        Summary.loc[:,'MERCER_ACTION'] = 'n/a'
+
     # Setting correct column order and making sure their names are OK
     ColumnOrder = Setup.iloc[0:15]['SummaryOrder'].tolist()
     Summary = Summary[ColumnOrder]    
+
     # filling up NAN values and other rubbish with "n/a" for easy removal
-    Summary.loc[:,'EXCLUDED':'MDA_APPLY'].fillna(value = 'n/a', inplace = True)
+    Summary.fillna(value = 'n/a', inplace = True)
 
     # removing records which, after applying tresholds, are not displaying any
     # issues and/or display them only on irrelevant tabs (e.g. QAD_YN = N, etc)
@@ -500,6 +490,17 @@ def create_report_file():
     sheet['D33'].value = InternalDeadline
     sheet['D34'].value = InternalDeadline
     sheet['D35'].value = QAD
+
+    # copying treshold values, with an addition of formatting
+    sheet = template['Tresholds']
+    sheet['C2'] = '>{}%'.format(int(tresholds.iloc[0,2]*100))
+    sheet['C3'] = '>{}'.format(int(tresholds.iloc[1,2]))
+    sheet['C4'] = '>{}%'.format(int(tresholds.iloc[2,2]*100))
+    sheet['C5'] = '>{}'.format(int(tresholds.iloc[3,2]))
+    sheet['C6'] = '<{}%'.format(int(tresholds.iloc[4,2]*100))
+    sheet['C7'] = '>{}'.format(int(tresholds.iloc[5,2]))
+    sheet['C8'] = '>{}'.format(int(tresholds.iloc[6,2]))
+    sheet['C9'] = '>{}'.format(int(tresholds.iloc[7,2]))
 
     # saving the file in the output folder and with final name   
     print('saving template...')
@@ -531,6 +532,7 @@ def create_final_report():
                 sheet_name = 'Summary',
                 header = None, index = False,
                 startrow = 1, startcol = 8)
+    
     print('done!')
     
 
@@ -638,10 +640,11 @@ def create_final_report():
         print('done!')
     else:
         print('skipping QAD & MDA data')
-        
+    
+    print('Saving...')  # new print added as .save() takes some time to finish
     Writer.save()
     print('Report is ready')
-
+    
 
 def __main__():
     import_xlsx_files(Path)
@@ -652,7 +655,6 @@ def __main__():
     create_excluded_incumbents()
     create_YTPos()
     create_YTAll()
-    # date_convert(gst_date) # TO BE USED ONLY INSIDE OF OTHER FUNCTIONS (after deadline AND qad_mda)
     create_after_deadline()
     create_mda()
     create_contact_details()
@@ -662,25 +664,3 @@ def __main__():
     create_final_report()
 
 __main__()
-
-# testing critical functions 
-# (most of them will be later joined in some kind of Main() etc)
-#import_xlsx_files(Path)
-#make_names_standard()
-#create_excluded_entities()
-#create_exclude_reasons()
-#create_excluded_incumbents()
-#create_YTPos()
-#create_YTAll()
-# date_convert(gst_date) # TO BE USED ONLY INSIDE OF OTHER FUNCTIONS (after deadline AND qad_mda)
-#create_after_deadline()
-#create_mda()
-#create_contact_details()
-#create_summary()
-
-#create_report_file()
-#create_final_report()
-
-
-
-
