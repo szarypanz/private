@@ -1,0 +1,161 @@
+Sub PCReportFormat()
+    
+    open_report_file 'function opening PC report
+
+ActiveWorkbook.Worksheets("Introduction").Activate
+Range("A1").Select
+
+ActiveWorkbook.Close SaveChanges:=True
+
+End Sub
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Sub open_report_file()
+
+Dim fileString As String
+
+fileString = Application.GetOpenFilename()
+
+If fileString <> "False" Then
+    
+    Dim wb As Workbook
+    
+    Set wb = Workbooks.Open(FileName:=fileString)
+    Set wb = ActiveWorkbook
+
+    hideunusedcells 'calling function for hiding rows w/o data
+    
+    summary_formatting 'calling functions for copying formats by row
+        
+    MsgBox "File is formatted"
+  
+End If
+
+End Sub
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Sub hideunusedcells() 'function for hiding rows w/o data
+   
+Dim ws As Worksheet
+
+    For Each ws In ActiveWorkbook.Worksheets
+            
+        lrow = ws.Cells(Rows.Count, "A").End(xlUp).Row
+        
+        Range(ws.Cells(lrow + 2, 1), ws.Cells(Rows.Count, Columns.Count)).EntireRow.Hidden = True
+    
+    Next ws
+    
+End Sub
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Sub summary_formatting() 'copying formats by each row
+
+Dim rangecopy As Range, rangepaste As Range
+
+
+ActiveWorkbook.Worksheets("Summary").Activate 'copying formats for Summary tab
+With ActiveSheet
+    Set rangecopy = .Range(.Range("A2"), .Cells(2, Columns.Count).End(xlToLeft))
+    Set rangepaste = .Range(.Range("A2"), .Cells(Rows.Count, 1).End(xlUp)).Resize(, rangecopy.Columns.Count)
+End With
+rangecopy.Copy
+rangepaste.PasteSpecial Paste:=xlPasteFormats
+Application.CutCopyMode = False
+Range("A1").Select
+
+
+'''' rest of the tabs
+ActiveWorkbook.Worksheets("Excluded Entities").Activate 'copying formats for Excluded Entities tab
+If Range("A5") > 0 Then
+    With ActiveSheet
+        Set rangecopy = .Range(.Range("A5"), .Cells(5, Columns.Count).End(xlToLeft))
+        Set rangepaste = .Range(.Range("A5"), .Cells(Rows.Count, 1).End(xlUp)).Resize(, rangecopy.Columns.Count)
+    End With
+    rangecopy.Copy
+    rangepaste.PasteSpecial Paste:=xlPasteFormats
+    Application.CutCopyMode = False
+    Range("A1").Select
+End If
+
+ActiveWorkbook.Worksheets("Excluded Incumbents").Activate 'copying formats for Excluded Incumbents tab
+If Range("A5") > 0 Then
+    With ActiveSheet
+        Set rangecopy = .Range(.Range("A5"), .Cells(5, Columns.Count).End(xlToLeft))
+        Set rangepaste = .Range(.Range("A5"), .Cells(Rows.Count, 1).End(xlUp)).Resize(, rangecopy.Columns.Count)
+    End With
+    rangecopy.Copy
+    rangepaste.PasteSpecial Paste:=xlPasteFormats
+    Application.CutCopyMode = False
+    Range("A1").Select
+End If
+
+ActiveWorkbook.Worksheets("AGC Rematches").Activate 'copying formats for AGC Rematches tab
+If Range("A5") > 0 Then
+    With ActiveSheet
+        Set rangecopy = .Range(.Range("A5"), .Cells(5, Columns.Count).End(xlToLeft))
+        Set rangepaste = .Range(.Range("A5"), .Cells(Rows.Count, 1).End(xlUp)).Resize(, rangecopy.Columns.Count)
+    End With
+    rangecopy.Copy
+    rangepaste.PasteSpecial Paste:=xlPasteFormats
+    Application.CutCopyMode = False
+    Range("A1").Select
+End If
+
+
+ActiveWorkbook.Worksheets("Multiple YT Positions").Activate 'copying formats for Multiple YT Positions tab
+If Range("A5") > 0 Then
+    With ActiveSheet
+        Set rangecopy = .Range(.Range("A5"), .Cells(5, Columns.Count).End(xlToLeft))
+        Set rangepaste = .Range(.Range("A5"), .Cells(Rows.Count, 1).End(xlUp)).Resize(, rangecopy.Columns.Count)
+    End With
+    rangecopy.Copy
+    rangepaste.PasteSpecial Paste:=xlPasteFormats
+    Application.CutCopyMode = False
+    Range("A1").Select
+End If
+
+
+ActiveWorkbook.Worksheets("Multiple YT All Data").Activate 'copying formats for Multiple YT All Data tab
+If Range("A5") > 0 Then
+    With ActiveSheet
+        Set rangecopy = .Range(.Range("A5"), .Cells(5, Columns.Count).End(xlToLeft))
+        Set rangepaste = .Range(.Range("A5"), .Cells(Rows.Count, 1).End(xlUp)).Resize(, rangecopy.Columns.Count)
+    End With
+    rangecopy.Copy
+    rangepaste.PasteSpecial Paste:=xlPasteFormats
+    Application.CutCopyMode = False
+    Range("A1").Select
+End If
+
+
+ActiveWorkbook.Worksheets("After Deadline").Activate 'copying formats for After Deadline tab
+If Range("A5") > 0 Then
+    With ActiveSheet
+        Set rangecopy = .Range(.Range("A5"), .Cells(5, Columns.Count).End(xlToLeft))
+        Set rangepaste = .Range(.Range("A5"), .Cells(Rows.Count, 1).End(xlUp)).Resize(, rangecopy.Columns.Count)
+    End With
+    rangecopy.Copy
+    rangepaste.PasteSpecial Paste:=xlPasteFormats
+    Application.CutCopyMode = False
+    Range("A1").Select
+End If
+
+
+ActiveWorkbook.Worksheets("DVF after QAD & MDA").Activate 'copying formats for DVF after QAD & MDA tab
+If Range("A5") > 0 Then
+    With ActiveSheet
+        Set rangecopy = .Range(.Range("A5"), .Cells(5, Columns.Count).End(xlToLeft))
+        Set rangepaste = .Range(.Range("A5"), .Cells(Rows.Count, 1).End(xlUp)).Resize(, rangecopy.Columns.Count)
+    End With
+    rangecopy.Copy
+    rangepaste.PasteSpecial Paste:=xlPasteFormats
+    Application.CutCopyMode = False
+    Range("A1").Select
+End If
+
+End Sub
+
+   
+
+
+
+
+
