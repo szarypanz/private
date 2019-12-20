@@ -1,52 +1,51 @@
 Sub PCReportFormat()
     
-    open_report_file 'function opening PC report
+    Dim fileString As String
 
-ActiveWorkbook.Worksheets("Introduction").Activate
-Range("A1").Select
-
-ActiveWorkbook.Close SaveChanges:=True
-
-End Sub
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub open_report_file()
-
-Dim fileString As String
-
-fileString = Application.GetOpenFilename()
-
-If fileString <> "False" Then
+    fileString = Application.GetOpenFilename()
     
-    Dim wb As Workbook
+    If fileString <> "False" Then
     
-    Set wb = Workbooks.Open(FileName:=fileString)
-    Set wb = ActiveWorkbook
+        Dim wb As Workbook
+    
+        Set wb = Workbooks.Open(FileName:=fileString)
+        Set wb = ActiveWorkbook
 
-    hideunusedcells 'calling function for hiding rows w/o data
+        hideunusedcells 'calling procedure for hiding rows w/o data
     
-    summary_formatting 'calling functions for copying formats by row
+        report_formatting 'calling procedure for copying formats by row
         
-    MsgBox "File is formatted"
+        MsgBox "done"
+        ActiveWorkbook.Worksheets("Introduction").Activate
+        Range("A1").Select
+        ActiveWorkbook.Close SaveChanges:=True
+
+    Else
+
+        Exit Sub    'closing sub if no file was chosen
   
-End If
+    End If
 
 End Sub
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub hideunusedcells() 'function for hiding rows w/o data
+
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+Sub hideunusedcells() 'hiding rows w/o data
    
 Dim ws As Worksheet
 
-    For Each ws In ActiveWorkbook.Worksheets
+    For Each ws In ActiveWorkbook.Worksheets 'goes by each worksheet, all tabs were prepared with this in mind
             
         lrow = ws.Cells(Rows.Count, "A").End(xlUp).Row
-        
         Range(ws.Cells(lrow + 2, 1), ws.Cells(Rows.Count, Columns.Count)).EntireRow.Hidden = True
     
     Next ws
     
 End Sub
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub summary_formatting() 'copying formats by each row
+
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+Sub report_formatting() 'copying formats by row - each tab is done separately in case dimensions change etc
 
 Dim rangecopy As Range, rangepaste As Range
 
@@ -62,9 +61,9 @@ Application.CutCopyMode = False
 Range("A1").Select
 
 
-'''' rest of the tabs (would loop through it but im not feelin like it rn, dunno)
+' rest of the tabs
 ActiveWorkbook.Worksheets("Excluded Entities").Activate 'copying formats for Excluded Entities tab
-If Range("A5") > 0 Then
+If Range("A5") > 0 Then                                 ' (If) statement allows script to skip empty tabs
     With ActiveSheet
         Set rangecopy = .Range(.Range("A5"), .Cells(5, Columns.Count).End(xlToLeft))
         Set rangepaste = .Range(.Range("A5"), .Cells(Rows.Count, 1).End(xlUp)).Resize(, rangecopy.Columns.Count)
@@ -74,6 +73,7 @@ If Range("A5") > 0 Then
     Application.CutCopyMode = False
     Range("A1").Select
 End If
+
 
 ActiveWorkbook.Worksheets("Excluded Incumbents").Activate 'copying formats for Excluded Incumbents tab
 If Range("A5") > 0 Then
@@ -86,6 +86,7 @@ If Range("A5") > 0 Then
     Application.CutCopyMode = False
     Range("A1").Select
 End If
+
 
 ActiveWorkbook.Worksheets("AGC Rematches").Activate 'copying formats for AGC Rematches tab
 If Range("A5") > 0 Then
@@ -151,11 +152,5 @@ If Range("A5") > 0 Then
     Range("A1").Select
 End If
 
+
 End Sub
-
-   
-
-
-
-
-
