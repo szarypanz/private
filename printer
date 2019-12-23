@@ -172,7 +172,7 @@ def create_excluded_entities():
 # matching them with Excluded Entities 
 def create_exclude_reasons():
 
-    if ExcEntities_YN == 'Y':
+    if ExcEntities_YN == 'Y' and len(ExcReasonData) > 0:
 
         global ExcReasonData
         ExcReasonData['EXCLUDE_REASON'] = ExcReasonData['EXCLUDE_REASON'].fillna(value = 'Unspecified exclude reason')
@@ -235,7 +235,7 @@ def create_excluded_incumbents():
 
 
 
-# YTPositions requires only tresholds application
+# YTPositions tab requires only tresholds application
 def create_YTPos():
 
     if MultipleYTPos_YN == 'Y':
@@ -252,16 +252,15 @@ def create_YTPos():
         MultipleYTPositionsData = MultipleYTPositionsData.reset_index()
 
 
-
         # creating temporary object to apply Positions treshold
         Titles = MultipleYTPositionsData.POSTITLE.value_counts().to_frame()
         Titles = Titles.POSTITLE[Titles.POSTITLE >= tresholds.iloc[5,2]].to_frame()
         Titles['POSTITLE'] = Titles.index
 
-        # filtering final DF by Titles that are fullfiling treshold criteria
+
+        # filtering final DF by Titles that are fullfiling YT treshold criteria
         MultipleYTPositionsData = MultipleYTPositionsData[
                 MultipleYTPositionsData['POSTITLE'].isin(Titles['POSTITLE'])]
-
 
         # applying YTitles treshold
         MultipleYTPositionsData = MultipleYTPositionsData[MultipleYTPositionsData.UNIQUEYOURTITLE
@@ -285,11 +284,13 @@ def create_YTAll():
         MultipleYTPositionsAll = MultipleYTPositionsAll.applymap(
                 lambda x: x.encode('unicode_escape').decode('utf-8') if isinstance(x, str) else x)
 
-        #filtering out records that are present on YTPos:
-        MultipleYTPositionsAll = MultipleYTPositionsAll[
+        # filtering out records that are not present on YTPos, if it is available:
+        if MultipleYTPos_YN == 'Y':
+
+            MultipleYTPositionsAll = MultipleYTPositionsAll[
                 MultipleYTPositionsAll.ORGDATA_SUBMISSIONID.isin(MultipleYTPositionsData.ORGDATA_SUBMISSIONID)]
-        
-        MultipleYTPositionsAll = MultipleYTPositionsAll[
+
+            MultipleYTPositionsAll = MultipleYTPositionsAll[
                 MultipleYTPositionsAll.POSTITLE.isin(MultipleYTPositionsData.POSTITLE)]
 
 
