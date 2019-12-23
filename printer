@@ -48,7 +48,7 @@ MultipleYTAll_YN = Setup.iloc[23,2]
 Deadlines_YN = Setup.iloc[24,2]
 QAD_YN = Setup.iloc[25,2]
 
-FileNames = Setup.iloc[28:35,2].tolist()
+FileNames = Setup.iloc[28:34,2].tolist()
 ReportName = 'Problematic Companies {} - report.xlsx'.format(SurveyFullName)
 TemplatePath = os.path.join(Path,TemplateName)
 
@@ -96,13 +96,9 @@ def import_xlsx_files(Path):
     if AGCRematches_YN == 'Y' and pd.notna(FileNames[4]):
         AGCRematchesData = pd.read_excel(os.path.join(Path, FileNames[4]))
 
-    global MultipleYTPositionsData
-    if MultipleYTPos_YN == 'Y' and pd.notna(FileNames[5]):
-        MultipleYTPositionsData = pd.read_excel(os.path.join(Path, FileNames[5]))
-
     global MultipleYTPositionsAll
-    if MultipleYTAll_YN == 'Y' and pd.notna(FileNames[6]):
-        MultipleYTPositionsAll = pd.read_excel(os.path.join(Path, FileNames[6]))
+    if (MultipleYTAll_YN == 'Y' or MultipleYTPos_YN == 'Y') and pd.notna(FileNames[5]):
+        MultipleYTPositionsAll = pd.read_excel(os.path.join(Path, FileNames[5]))
 
     print('transforming data...')
 
@@ -144,21 +140,16 @@ def make_names_standard():
         AGCRematchesColumns = Setup.iloc[0:5]['AGCRematchesColumns']
         AGCRematchesData.columns = AGCRematchesColumns.dropna()
 
-    if MultipleYTPos_YN == 'Y':
-        global MultipleYTPositionsData
-        MultipleYTPosColumns = Setup.iloc[0:8]['MultipleYTPosColumns']
-        MultipleYTPositionsData.columns = MultipleYTPosColumns.dropna()
-
-    if MultipleYTAll_YN == 'Y':
+    if MultipleYTAll_YN == 'Y' or MultipleYTPos_YN == 'Y':
         global MultipleYTPositionsAll
-        MultipleYTAllColumns = Setup.iloc[0:8]['MultipleYTAllColumns']
+        MultipleYTAllColumns = Setup.iloc[0:10]['MultipleYTAllColumns']
         MultipleYTPositionsAll.columns = MultipleYTAllColumns.dropna()
 
 
 
 
-#   Excluded Entities sheet - adding perc of excluded entities
-#   and filtering out records below the treshold:
+# Excluded Entities sheet - adding perc of excluded entities
+# and filtering out records below the treshold:
 def create_excluded_entities():
 
     if ExcEntities_YN == 'Y':
@@ -177,7 +168,7 @@ def create_excluded_entities():
 
 
 
-# preparing clean Exclude reasons (by co_code2), grouping them by SubID
+# preparing clean Exclude reasons (by co_code2), grouping them by SubID,
 # matching them with Excluded Entities 
 def create_exclude_reasons():
 
@@ -244,15 +235,41 @@ def create_excluded_incumbents():
 
 
 
-# YTPositions requires only treshold application
+# YTPositions requires only tresholds application
 def create_YTPos():
 
     if MultipleYTPos_YN == 'Y':
 
         global MultipleYTPositionsData
+        global MultipleYTPositionsAll
 
+        # transforming raw data:
+        MultipleYTPositionsData = MultipleYTPositionsAll.copy()
+        MultipleYTPositionsData.drop(columns = 'ALLINCUMBENTS', inplace = True)
+        MultipleYTPositionsData = MultipleYTPositionsData.groupby([
+                'ORGDATA_SUBMISSIONID','ORGDATA_CO_CODE1','ORGDATA_CO_CODE2',
+                'ORGDATA_CO_NAME2','POS_CODE','POSTITLE']).sum()
+        MultipleYTPositionsData = MultipleYTPositionsData.reset_index()
+
+
+
+        # creating temporary object to apply Positions treshold
+        Titles = MultipleYTPositionsData.POSTITLE.value_counts().to_frame()
+        Titles = Titles.POSTITLE[Titles.POSTITLE >= tresholds.iloc[5,2]].to_frame()
+        Titles['POSTITLE'] = Titles.index
+
+        # filtering final DF by Titles that are fullfiling treshold criteria
+        MultipleYTPositionsData = MultipleYTPositionsData[
+                MultipleYTPositionsData['POSTITLE'].isin(Titles['POSTITLE'])]
+
+
+        # applying YTitles treshold
         MultipleYTPositionsData = MultipleYTPositionsData[MultipleYTPositionsData.UNIQUEYOURTITLE
-                                                          >= tresholds.iloc[5,2]]
+                                                          >= tresholds.iloc[6,2]]
+
+        # if we do not need the other YT tab, we could remove the source df from memory:
+        if MultipleYTAll_YN != 'Y':
+            del MultipleYTPositionsAll
 
 
 
@@ -268,15 +285,12 @@ def create_YTAll():
         MultipleYTPositionsAll = MultipleYTPositionsAll.applymap(
                 lambda x: x.encode('unicode_escape').decode('utf-8') if isinstance(x, str) else x)
 
-
-        # creating temporary object to apply treshold
-        Titles = MultipleYTPositionsAll.YOUR_TITLE.value_counts().to_frame()
-        Titles = Titles.YOUR_TITLE[Titles.YOUR_TITLE >= tresholds.iloc[6,2]].to_frame()
-        Titles['YOUR_TITLE'] = Titles.index
-
-        # filtering final DF by Titles that are fullfiling treshold criteria
+        #filtering out records that are present on YTPos:
         MultipleYTPositionsAll = MultipleYTPositionsAll[
-                MultipleYTPositionsAll['YOUR_TITLE'].isin(Titles['YOUR_TITLE'])]
+                MultipleYTPositionsAll.ORGDATA_SUBMISSIONID.isin(MultipleYTPositionsData.ORGDATA_SUBMISSIONID)]
+        
+        MultipleYTPositionsAll = MultipleYTPositionsAll[
+                MultipleYTPositionsAll.POSTITLE.isin(MultipleYTPositionsData.POSTITLE)]
 
 
 
@@ -788,7 +802,7 @@ __main__()
 
 
 # OPTIONAL MODULE - preparing Late Submission, if required;
-# whole section would be put betwenn create_summary and create_report_file
+# whole section would be put between create_summary and create_report_file
 #
 #LateContact = []
 #LateSub = []
