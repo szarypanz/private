@@ -65,23 +65,25 @@ SummaryIncumbents = []
 LateContact = []
 LateSub = []
 
-tresholds = Setup.iloc[0:8, 20:23]
+tresholds = Setup.iloc[36:44, 2:4]
 
 
 # checking if any tresholds should be skipped:
 def create_tresholds():
 
+
+
     # duplicates tresholds is 'less than' condition so we'd replace empty/N
     # with 100%:
-    if (tresholds.iloc[4,2] == 'N' or pd.notna(tresholds.iloc[4,2])):
-        tresholds.iloc[4,2] = 1
+    if (tresholds.iloc[4,1] == 'N' or pd.isna(tresholds.iloc[4,1])):
+        tresholds.iloc[4,1] = 1
 
     # custom default tresholds for YTPos & QAD
-    if (tresholds.iloc[7,2] == 'N' or pd.notna(tresholds.iloc[7,2])):
-        tresholds.iloc[7,2] = 14    # 14 days after QAD
+    if (tresholds.iloc[7,1] == 'N' or pd.isna(tresholds.iloc[7,1])):
+        tresholds.iloc[7,1] = 14    # 14 days after QAD
 
-    if (tresholds.iloc[6,2] == 'N' or pd.notna(tresholds.iloc[6,2])):
-        tresholds.iloc[6,2] = 10    # 10 unique Your Titles
+    if (tresholds.iloc[6,1] == 'N' or pd.isna(tresholds.iloc[6,1])):
+        tresholds.iloc[6,1] = 10    # 10 unique Your Titles
 
     # other N/missing tresholds can be replaced with 0:
     tresholds.replace('N', 0, inplace=True)
@@ -181,14 +183,14 @@ def create_excluded_entities():
 
         global ExcEntitiesData
         ExcEntitiesData = ExcEntitiesData[ExcEntitiesData.SUBMITTED
-                                          >= tresholds.iloc[1,2]]
+                                          >= tresholds.iloc[1,1]]
 
         ExcEntitiesData.loc[:,'EXCLUDED_PERC'] = round(
             ExcEntitiesData['EXCLUDED']
             / ExcEntitiesData['SUBMITTED'], 2)
 
         ExcEntitiesData = ExcEntitiesData[ExcEntitiesData.EXCLUDED_PERC
-                                          >= tresholds.iloc[0,2]]
+                                          >= tresholds.iloc[0,1]]
 
 
 
@@ -204,7 +206,8 @@ def create_exclude_reasons():
 
         ExcReasonData['EXCLUDE_REASON'] = ExcReasonData['EXCLUDE_REASON'].fillna(value='Unspecified exclude reason')
         ExcReasonData['CO_NAME2'] = ExcReasonData['CO_NAME2'].fillna(value='Unnamed Entity')
-        ExcReasonData['EXCLUDE_REASON'] = ExcReasonData['CO_NAME2']+": "+ExcReasonData['EXCLUDE_REASON']
+        ExcReasonData['EXCLUDE_REASON'] = (ExcReasonData['CO_NAME2']+": "
+                                           +ExcReasonData['EXCLUDE_REASON'])
 
         global ExcEntitiesData
         for x in ExcReasonData['SUBMISSIONID'].unique():
@@ -252,11 +255,11 @@ def create_excluded_incumbents():
             y = y + 1
 
         ExcIncumbentsData = ExcIncumbentsData[ExcIncumbentsData.ALLINCUMBENTS
-                                              >= tresholds.iloc[3,2]]
+                                              >= tresholds.iloc[3,1]]
         ExcIncumbentsData = ExcIncumbentsData[ExcIncumbentsData.EXCLUDED_PERC
-                                              >= tresholds.iloc[2,2]]
+                                              >= tresholds.iloc[2,1]]
         ExcIncumbentsData = ExcIncumbentsData[ExcIncumbentsData.dupl_perc
-                                              <= tresholds.iloc[4,2]]
+                                              <= tresholds.iloc[4,1]]
         ExcIncumbentsData.drop(columns='dupl_perc', inplace=True)
 
 
@@ -280,12 +283,12 @@ def create_YTPos():
 
         # applying YTitles treshold
         MultipleYTPositionsData = MultipleYTPositionsData[MultipleYTPositionsData.UNIQUEYOURTITLE
-                                                          >= tresholds.iloc[6,2]]
+                                                          >= tresholds.iloc[6,1]]
 
         # creating temporary object to apply 'x Positions per Company' treshold
         Cpys = MultipleYTPositionsData.ORGDATA_CO_CODE2.value_counts().to_frame()
         Cpys = Cpys.ORGDATA_CO_CODE2[Cpys.ORGDATA_CO_CODE2
-                                     >= tresholds.iloc[5,2]].to_frame()
+                                     >= tresholds.iloc[5,1]].to_frame()
         Cpys['key'] = Cpys.index
 
         # filtering final DF by companys that are fullfiling Pos/Cpy treshold
@@ -430,8 +433,8 @@ def create_mda():
         MDAData['DELAY'] = MDAData['DELAY'].dt.days
 
         # pasting 0s for DVFs that returned before QAD and would have '-x'
-        # results in 'DELAY' field. Replace 2nd '0' here for any msg you want
-        # to display:
+        # results in 'DELAY' field. Replace 2nd '0' here with any string 
+        # or message you want to display:
         MDAData.loc[MDAData['DELAY'] < 0, 'DELAY'] = 0
 
 
@@ -440,14 +443,14 @@ def create_mda():
         y = 0
         for x in MDAData['SUBMISSIONID']:
             qad_check = MDAData.iloc[y,9]
-            if qad_check > int(tresholds.iloc[7,2]):  # cutoff as per Treshold
+            if qad_check > int(tresholds.iloc[7,1]):  # cutoff as per Treshold
                 MDAData.iloc[y,10] = "Y"
             else:
                 MDAData.iloc[y,10] = "N"
             y = y + 1
 
         # Preparing MDA Y/N column
-        MDAData['MERCER_ACTION'] = MDAData['MERCER_ACTION'].replace(1,'Y')
+        MDAData.loc[~MDAData.MERCER_ACTION.isnull(), 'MERCER_ACTION'] = 'Y'
         MDAData['MERCER_ACTION'].fillna(value='N', inplace=True)
 
         # filtering out records which are neither afterQAD / MDA,
@@ -726,33 +729,33 @@ def create_report_file():
     print('opening template...')
     template = pyxl.load_workbook(filename=TemplateName)
 
-    # Copying data (dates, names) from Settings
+    # Copying misc data (dates, names) from Settings to Introduction tab
     print('updating template...')
     sheet = template['Introduction']
     sheet['B1'].value = '2020 {} - Problematic Companies'.format(SurveyFullName)
     sheet['B21'].value = ('These tabs show positions with more than {} unique'
-                          ' Your Titles'.format(int(tresholds.iloc[6,2])))
-    sheet['D31'].value = SubmissionDeadline
-    sheet['D32'].value = InternalDeadline
+                          ' Your Titles'.format(int(tresholds.iloc[6,1])))
+    sheet['D32'].value = SubmissionDeadline
     sheet['D33'].value = InternalDeadline
-    sheet['D34'].value = QAD
+    sheet['D34'].value = InternalDeadline
+    sheet['D35'].value = QAD
 
     # Updating Summary & QAD sheet with treshold value
     sheet = template['Summary']
-    sheet['P1'] = 'DVF more than {} days after QAD'.format(int(tresholds.iloc[7,2]))
+    sheet['P1'] = 'DVF more than {} days after QAD'.format(int(tresholds.iloc[7,1]))
     sheet = template['DVF after QAD & MDA']
-    sheet['K4'] = 'More than {} days after QAD'.format(int(tresholds.iloc[7,2]))
+    sheet['K4'] = 'More than {} days after QAD'.format(int(tresholds.iloc[7,1]))
 
     # copying treshold values, with an addition of formatting
     sheet = template['Tresholds']
-    sheet['C2'] = '>{}%'.format(int(tresholds.iloc[0,2]*100))
-    sheet['C3'] = '>{}'.format(int(tresholds.iloc[1,2]))
-    sheet['C4'] = '>{}%'.format(int(tresholds.iloc[2,2]*100))
-    sheet['C5'] = '>{}'.format(int(tresholds.iloc[3,2]))
-    sheet['C6'] = '<{}%'.format(int(tresholds.iloc[4,2]*100))
-    sheet['C7'] = '>{}'.format(int(tresholds.iloc[5,2]))
-    sheet['C8'] = '>{}'.format(int(tresholds.iloc[6,2]))
-    sheet['C9'] = '>{}'.format(int(tresholds.iloc[7,2]))
+    sheet['C2'] = '>{}%'.format(int(tresholds.iloc[0,1]*100))
+    sheet['C3'] = '>{}'.format(int(tresholds.iloc[1,1]))
+    sheet['C4'] = '>{}%'.format(int(tresholds.iloc[2,1]*100))
+    sheet['C5'] = '>{}'.format(int(tresholds.iloc[3,1]))
+    sheet['C6'] = '<{}%'.format(int(tresholds.iloc[4,1]*100))
+    sheet['C7'] = '>{}'.format(int(tresholds.iloc[5,1]))
+    sheet['C8'] = '>{}'.format(int(tresholds.iloc[6,1]))
+    sheet['C9'] = '>{}'.format(int(tresholds.iloc[7,1]))
 
     # saving the file in the working folder and with final name
     print('saving template...')
