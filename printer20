@@ -4,7 +4,7 @@
 #       / __ \/ ____/  /_  __/___  ____  / /                                 #
 #      / /_/ / /        / / / __ \/ __ \/ /                                  #
 #     / ____/ /___     / / / /_/ / /_/ / /                                   #
-#    /_/    \____/    /_/  \____/\____/_/   version 1.00                     #
+#    /_/    \____/    /_/  \____/\____/_/   version 1.01                     #
 #                                                                            #
 ##############################################################################
 
@@ -65,31 +65,30 @@ SummaryIncumbents = []
 LateContact = []
 LateSub = []
 
-thresholds = Setup.iloc[36:44, 2:4]
+thresholds = Setup.iloc[36:44, 2:4] # change it to 36:45 when testing AGC mod
 
 
 # checking if any thresholds should be skipped:
 def create_thresholds():
-
-
 
     # duplicates thresholds is 'less than' condition so we'd replace empty/N
     # with 100%:
     if (thresholds.iloc[4,1] == 'N' or pd.isna(thresholds.iloc[4,1])):
         thresholds.iloc[4,1] = 1
 
-    # custom default thresholds for YTPos & QAD
+    # custom default thresholds for YTPos & QAD (and optionally AGCRematches)
     if (thresholds.iloc[7,1] == 'N' or pd.isna(thresholds.iloc[7,1])):
         thresholds.iloc[7,1] = 14    # 14 days after QAD
 
     if (thresholds.iloc[6,1] == 'N' or pd.isna(thresholds.iloc[6,1])):
         thresholds.iloc[6,1] = 10    # 10 unique Your Titles
 
+#    if (thresholds.iloc[8,1] == 'N' or pd.isna(thresholds.iloc[8,1])):
+#        thresholds.iloc[8,1] = 0.01 # 1% of Rematches to All Incumbents
+
     # other N/missing thresholds can be replaced with 0:
     thresholds.replace('N', 0, inplace=True)
     thresholds.fillna(value=0, inplace=True)
-
-
 
 
 # function responsible for loading data from exported GST queries
@@ -224,6 +223,41 @@ def create_exclude_reasons():
 
         # removing Reasons dataframe to free some memory
         del ExcReasonData
+
+
+
+
+## applying tresholds to AGC Rematches - TEST MODULE
+#def create_AGCRematches():
+#
+#    thresholds.loc[8] = ['rematches as % of incumbents', 0.05] # SETTING TEST THRESHOLD
+#
+#    if AGCRematchesData and ExcIncumbents_YN == 'Y':
+#
+#        global AGCRematchesData
+#
+#        # as AGCRematches & Inc data are per Co_code2 we have to roll it by
+#        # subID to compare them and apply threshold
+#        AGCSlice = AGCRematchesData.loc[:,['SOURCE_SUBMISSIONID',
+#                                           'OBJECTID_COUNT']]
+#        AGCSlice = AGCSlice[~AGCSlice['SOURCE_SUBMISSIONID'].isnull()]
+#        AGCSlice = AGCSlice.groupby(['SOURCE_SUBMISSIONID']).sum()
+#        AGCSlice['SUBID'] = AGCSlice.index
+#
+#        ExcIncSlice = ExcIncumbentsData.loc[:,['SUBMISSIONID',
+#                                               'ALLINCUMBENTS']]
+#        ExcIncSlice = ExcIncSlice[~ExcIncSlice['SUBMISSIONID'].isnull()]
+#        ExcIncSlice = ExcIncSlice.groupby(['SUBMISSIONID']).sum()
+#        ExcIncSlice['SUBMISSIONID'] = ExcIncSlice.index
+#
+#        AGCSlice = AGCSlice.merge(ExcIncSlice,
+#                                  left_on='SUBID',
+#                                  right_on='SUBMISSIONID')
+#        AGCSlice['perc'] = AGCSlice.OBJECTID_COUNT / AGCSlice.ALLINCUMBENTS
+#        AGCSlice = AGCSlice[AGCSlice.perc >= thresholds.iloc[8,1]]
+#
+#        AGCRematchesData = AGCRematchesData[
+#                AGCRematchesData['SOURCE_SUBMISSIONID'].isin(AGCSlice['SUBMISSIONID'])]
 
 
 
@@ -585,12 +619,12 @@ def create_summary():
         # so we have to prepare a list of unique values
         # Also, as we index by sub id we will have to alter its name
         z = YTSlice.iloc[:,0].value_counts().to_frame()
-        z['SUBMISSIONID'] = z.index
-        z = z.rename(columns={'SUBMISSIONID':'key'})
+        z['key'] = z.index
+        z = z.rename(columns={'SUBMISSIONID':'UNIQUEYOURTITLE'})
         Summary = Summary.merge(z, left_on='SUBMISSIONID',
                                 right_on='key',
                                 how='left')
-        Summary = Summary.rename(columns={'key':'UNIQUEYOURTITLE'})
+        Summary.drop(columns='key', inplace=True)
         Summary.UNIQUEYOURTITLE.fillna(value='n/a', inplace=True)
     else:
         Summary.loc[:,'UNIQUEYOURTITLE'] = 'n/a'
@@ -682,7 +716,7 @@ def create_latesub():
         LateContact['LATESUB'] = LateContact['IMPORTDATE'] - InternalDeadline
         LateContact['LATESUB'] = LateContact['LATESUB'].dt.days
 
-        # transforming and pasting data into QAD/MDA tab:
+        # transforming and pasting data into AfterDeadline tab:
         LateContactSlice = LateContact.copy()
         LateContactSlice = LateContactSlice.rename(columns={'LATESUB':'DELAY'})
         LateContactSlice['DEADLINE_BREACH'] = 'Late Submission'
@@ -723,7 +757,7 @@ def create_report_file():
     template = pyxl.load_workbook(filename=TemplateName)
 
     # Copying misc data (dates, names) from Settings to Introduction tab
-    print('   updating template...')
+    print('       updating template...')
     sheet = template['Introduction']
     sheet['B1'].value = '2020 {} - Problematic Companies'.format(SurveyFullName)
     sheet['B21'].value = ('These tabs show positions with more than {} unique'
@@ -749,8 +783,13 @@ def create_report_file():
     sheet = template['DVF after QAD & MDA']
     sheet['K4'] = 'More than {} days after QAD'.format(int(thresholds.iloc[7,1]))
 
+    # updating Multiple YT Positions sheet with threshold value
+    sheet = template['Multiple YT Positions']
+    sheet['A3'] = ('Positions with more than {} unique Your Titles'
+                   ' (by SMI Code)'.format(int(thresholds.iloc[6,1])))
+
     # saving the file in the working folder and with final name
-    print('   saving template...')
+    print('       saving template...')
     template.save('{}\{}'.format(Path, ReportName))
 
 
@@ -895,9 +934,10 @@ def intro_header():
     print('║     / __ \/ ____/  /_  __/___  ____  / /              ║')
     print('║    / /_/ / /        / / / __ \/ __ \/ /               ║')
     print('║   / ____/ /___     / / / /_/ / /_/ / /                ║')
-    print('║  /_/    \____/    /_/  \____/\____/_/   version 1.00  ║')
+    print('║  /_/    \____/    /_/  \____/\____/_/   version 1.01  ║')
     print('║                                                       ║')
     print('╚═══════════════════════════════════════════════════════╝\n')
+
 
 
 
@@ -910,6 +950,7 @@ def __main__():
     make_names_standard()
     create_excluded_entities()
     create_exclude_reasons()
+    # create_AGCRematches()
     create_excluded_incumbents()
     create_YTPos()
     create_YTAll()
@@ -923,3 +964,19 @@ def __main__():
 
 
 __main__()
+
+
+###############################################################################
+# CHANGELOG
+#
+# 1.01
+# AGC REMATCHES MODULE BETA ADDED
+#    applying threshold to AGC Rematches, derived from dividing all incs from
+#    specific Sub by sum of rematches
+#    thresholds and applicalibity to be confirmed by CST
+#
+#
+# 1.00
+# LIVE VERSION OF TOOl
+#
+#
