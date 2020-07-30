@@ -170,8 +170,8 @@ NR_DOLKA = 2   # Adres pod ktorym znajduje się kolumna dołka A1
 for i in LISTA_DOLKOW:
 
     WIERSZ_MACIERZY = pd.Series(i)
-    X = 0
 
+    X = 0
     for tabela in LISTA_TABEL:
         # kopiujemy dane z głównych tabel:
         WYCINEK = GLOWNA_BAZA.iloc[USTAWIENIA.iloc[X, 1]:USTAWIENIA.iloc[X, 2],
@@ -214,6 +214,7 @@ del WAVELENGHTS
 NR_DOLKA = 2   # Adres pod ktorym znajduje się kolumna dołka A1
 
 for dolek in LISTA_DOLKOW:
+
     # Używamy kopii tabeli żeby zachować oryginał na kolejne przejscia pętli
     TABELA_DOCELOWA = TABELA_KOPIA
 
@@ -232,6 +233,7 @@ for dolek in LISTA_DOLKOW:
                                    how="left")
         TABELA_DOCELOWA = TABELA_DOCELOWA.fillna("")
         X = X + 1
+
 
     # Sortujemy wyniki od największej tabeli
     TABELA_DOCELOWA.sort_index(axis=1, ascending=False, inplace=True)
