@@ -16,7 +16,7 @@ import openpyxl as pyxl
 os.chdir(os.path.dirname(sys.argv[0]))
 
 ## do testowania pliku z poziomu IDE należy stosować poniższe 3 linijki:
-#PATH = "C:\\Users\\szymon-zwierew\\Desktop\\python"
+#PATH = "C:\\Users\\twoj_folder_z_pythonem"
 #os.chdir(PATH)
 #del PATH
 
@@ -34,6 +34,7 @@ for i in GLOWNA_BAZA.columns:
     KOLUMNY.append("Kolumna "+str(X))
     X = X + 1
 GLOWNA_BAZA.columns = KOLUMNY
+del KOLUMNY
 
 
 ###############################################################################
@@ -91,12 +92,12 @@ del LISTA_FAL, WYCINEK, WYCINEK_INDEX
 
 
 # Ustawiamy nowe nazwy tabel które ułatwią późniejsze sortowanie
-X = 0
+X = 1
 for i in LISTA_TABEL:
-    if X < 9:
-        LISTA_TABEL[X] = "0" + str(X + 1) + ": EM Spectrum"
+    if X < 10:
+        LISTA_TABEL[X - 1] = "0" + str(X) + ": EM Spectrum"
     else:
-        LISTA_TABEL[X] = str(X + 1) + ": EM Spectrum"
+        LISTA_TABEL[X - 1] = str(X) + ": EM Spectrum"
     X = X + 1
 
 
@@ -203,7 +204,6 @@ print("      tworzenie map F2D...")
 # Przygotowujemy tabelę docelową i wstawiamy w nią listę fal;
 # jednoczesnie zapisujemy jej kopię na użytek późniejszej pętli FOR:
 TABELA_DOCELOWA = pd.DataFrame(columns=["Wavelength"])
-TABELA_DOCELOWA["Wavelength"] = TABELA_DOCELOWA["Wavelength"].astype(int)
 TABELA_DOCELOWA = TABELA_DOCELOWA.append(WAVELENGHTS, sort=True)
 TABELA_KOPIA = TABELA_DOCELOWA.copy()
 del WAVELENGHTS
@@ -224,13 +224,8 @@ for dolek in LISTA_DOLKOW:
         DOLEK = GLOWNA_BAZA.iloc[USTAWIENIA.iloc[X, 1]:USTAWIENIA.iloc[X, 2],
                                  NR_DOLKA]
         WYCINEK = pd.concat([FALA, DOLEK], axis=1)
+        WYCINEK.columns = ["Wavelength", i]
 
-        KOLUMNY_WYCINKA = ["Wavelength", i]
-        WYCINEK.columns = KOLUMNY_WYCINKA
-
-        # żeby Merge przeszedł poprawnie musimy wymusić własciwą interpretację
-        # formatów przez Pythona:
-        WYCINEK["Wavelength"] = WYCINEK["Wavelength"].astype(int)
 
         # po czym dokonujemy pythonowego vlookupowania, po fali
         TABELA_DOCELOWA = pd.merge(TABELA_DOCELOWA, WYCINEK, on="Wavelength",
@@ -238,12 +233,8 @@ for dolek in LISTA_DOLKOW:
         TABELA_DOCELOWA = TABELA_DOCELOWA.fillna("")
         X = X + 1
 
-    # Kopiujemy nazwy i sortujemy wyniki od największej tabeli
-    TABELA_Z_NAZWAMI = LISTA_TABEL.copy()
-    TABELA_Z_NAZWAMI.insert(0, "Wavelength")
-    TABELA_DOCELOWA.columns = TABELA_Z_NAZWAMI
+    # Sortujemy wyniki od największej tabeli
     TABELA_DOCELOWA.sort_index(axis=1, ascending=False, inplace=True)
-    del TABELA_Z_NAZWAMI
 
 
     # Korzystamy ze stworzonego wczeniej Writera by przeniesc Tabelę Docelową
@@ -280,3 +271,4 @@ print("                     |||  |||")
 
 
 ###############################################################################
+
