@@ -49,7 +49,7 @@ del KOLUMNY
 
 print("      ustalanie listy tabel i ich adresów...")
 # na podstawie informacji z inputu pętlą for tworzymy listę tabel:
-LISTA_TABEL = [x for x in range(LICZBA_TABEL)]
+LISTA_TABEL = [i for i in range(LICZBA_TABEL)]
 for y in LISTA_TABEL:
     TABELA = "Read " + str(y + 1) + ":EM Spectrum"
     LISTA_TABEL[y] = TABELA
@@ -85,7 +85,7 @@ USTAWIENIA["Stop"] = USTAWIENIA["Stop"].astype(int)
 
 
 # jesli plik zawiera tab absorbancji, sciągamy jej adres na podstawie warunku:
-if TABELA_ABSORBANCJI == "T":
+if TABELA_ABSORBANCJI in ("T", "t"):
     TABELA = "Read "+str(len(LISTA_TABEL) + 1)+":Spectrum"
     for i in WYCINEK["Kolumna 0"]:
         if i == TABELA:
@@ -192,7 +192,7 @@ for i in LISTA_DOLKOW:
 
     # Jesli oprócz tabel EM wyniki zawierają też dodatkową tabelę bez EM możemy
     # skopiować ją na podstawie poniższego warunku:
-    if TABELA_ABSORBANCJI == "T":
+    if TABELA_ABSORBANCJI in ("T", "t"):
         WYCINEK = GLOWNA_BAZA.iloc[USTAWIENIA.iloc[0, 2]:USTAWIENIA.iloc[0, 3],
                                    NR_DOLKA]
         WIERSZ_MACIERZY = WIERSZ_MACIERZY.append(WYCINEK, ignore_index=True)
