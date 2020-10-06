@@ -155,7 +155,6 @@ KEYWORD_COL = DATA.pop('POS_CODE_KEYWORD')
 CARE_COL = DATA.pop('POS_CODE_CARE')
 DATA.insert(5, "POS_CODE_KEYWORD", KEYWORD_COL)
 DATA.insert(6, "POS_CODE_CARE", CARE_COL)
-
 del KEYWORD_COL, CARE_COL
 
 # we add final conversions to ensure that all numeric POS_CODEs are integers:
@@ -167,13 +166,13 @@ DATA.to_excel('whole_data_for_PR.xlsx', index=False)
 
 # we can also prepare CSV files for quick import, if PR confirms data is ok:
 DATA_K = DATA[['OBJECTID', 'POS_CODE_KEYWORD']].copy()
-DATA_K = DATA_K[DATA_K['POS_CODE_KEYWORD'] != 'unchanged']
+DATA_K = DATA_K[~DATA_K['POS_CODE_KEYWORD'].isnull()]
 DATA_K.rename(columns={'OBJECTID': 'ObjID', 'POS_CODE_KEYWORD': 'POS_CODE_DT'},
               inplace=True)
 DATA_K.to_csv('by_keywords_import.csv', index=False, encoding='utf-8')
 
 DATA_C = DATA[['OBJECTID', 'POS_CODE_CARE']].copy()
-DATA_C = DATA_C[DATA_C['POS_CODE_CARE'] != 'unchanged']
+DATA_C = DATA_C[~DATA_C['POS_CODE_CARE'].isnull()]
 DATA_C.rename(columns={'OBJECTID': 'ObjID', 'POS_CODE_CARE': 'POS_CODE_DT'},
               inplace=True)
 DATA_C.to_csv('by_care_type_import.csv', index=False, encoding='utf-8')
