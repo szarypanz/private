@@ -6,7 +6,7 @@ Created on Mon Sep 27 19:03:49 2020
 
 ###############################################################################
 #                                                                             #
-# SETUP - IDENTIFYING FILES AND ACCESSING DATA                                #
+# SETUP - Identyfying files and accessing data                                #
 #                                                                             #
 ###############################################################################
 
@@ -60,8 +60,7 @@ CARE_TYPE_MATRIX.POS_CODE_DT = [integer_convert(i) for i in
 
 ###############################################################################
 #                                                                             #
-# now that we have data, we can move to creating new matches by YOUR_TITLE    #
-# keywords.                                                                   #
+# Rematches by YOUR_TITLE                                                     #
 #                                                                             #
 ###############################################################################
 
@@ -83,7 +82,7 @@ KEYWORDS_LIST.remove('POS_CODE_DT')
 # we will check POSDATA by list of YTITLE fragments that may require rematching
 # and create dictionaries allowing us to find new POS_CODES.
 # In case of YOUR_TITLE containing multiple words from list, the LAST match
-# will be used - we can also use only the FIRST one by using 94th line of code
+# will be used - we can also save only the FIRST one by using 93rd line of code
 print('      creating dictionary...')
 
 DATA_MERGER = pd.DataFrame()
