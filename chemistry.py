@@ -15,16 +15,16 @@ import openpyxl as pyxl
 # końcowe raporty będą zapisywane w tej samej lokacji
 os.chdir(os.path.dirname(sys.argv[0]))
 
-## do testowania pliku z poziomu IDE należy stosować poniższe 3 linijki:
-#PATH = "C:\\Users\\twoj_folder_z_pythonem"
-#os.chdir(PATH)
-#del PATH
+# zaczynamy od podania liczby tabel do przeskanowania:
+LICZBA_TABEL = int(input("   Podaj liczbę tabel EM zawartych w pliku: "))
 
+# ...pobrania informacji nt tabeli absorbancji...:
+TABELA_ABSORBANCJI = input("   Czy plik zawiera tabelę absorbancji? (T/N): ")
 
-# załadowanie plików źródłowych - zostaną wykryte po nazwie
+# ...i podania nazwy pliku do wczytania:
+ADRES_EXCELA = input("   Podaj nazwę pliku, razem z rozszerzeniem xls/xlsx: ")
 print("      wczytywanie plików...")
-USTAWIENIA = pd.read_excel('Ustawienia.xlsx')
-GLOWNA_BAZA = pd.read_excel(USTAWIENIA.loc[0, "NazwaPliku"])
+GLOWNA_BAZA = pd.read_excel(ADRES_EXCELA)
 
 
 # zmieniamy nazwy kolumn w Glownej Bazie na bardziej przejrzyste wartosci
