@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
 """
+IHN rematches tool 1.00
 Created on Mon Sep 27 19:03:49 2020
-
-@author: szymon-zwierew
 """
 
+###############################################################################
+#                                                                             #
+# SETUP - IDENTIFYING FILES AND ACCESSING DATA                                #
+#                                                                             #
+###############################################################################
+
+
+# required packages and technical settings related to .df warnings
 import os
 import sys
 import pandas as pd
@@ -12,29 +19,17 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.options.mode.chained_assignment = None
 
-###############################################################################
-#                                                                             #
-# SETUP - loading up files, choosing working directory etc etc etc            #
-#                                                                             #
-###############################################################################
-
-
 # setting up working directory - script should be run by using command:
 # python C:\PRZYKLAD_SCIEZKI\rematching_matrix.py
 os.chdir(os.path.dirname(sys.argv[0]))
 
-## alternative method of setting up work directory - to be used in testing:
-#PATH = "C:\\Users\\szymon-zwierew\\Desktop\\python\\IHN"
-#os.chdir(PATH)
-#del PATH
-
 # we can define functions which will be used later to convert data:
 # 1) function for turning all necessary numbers from floats to integers:
-def integer_convert(s):
+def integer_convert(i):
     try:
-        return int(s)
+        return int(i)
     except (ValueError, TypeError):
-        return s
+        return i
 # 2) function that will lookup keywords in POSDATA.YOUR_TITLE:
 def title_check(ytitle, keyword):
     return f'{keyword}' in f'{ytitle}'
@@ -62,6 +57,7 @@ CARE_TYPE_MATRIX.fillna('unchanged', inplace=True)
 CARE_TYPE_MATRIX.POS_CODE_DT = [integer_convert(i) for i in
                                 CARE_TYPE_MATRIX.POS_CODE_DT]
 
+
 ###############################################################################
 #                                                                             #
 # now that we have data, we can move to creating new matches by YOUR_TITLE    #
@@ -81,30 +77,30 @@ DATA = pd.merge(DATA, KEYWORD_MATRIX, on='POS_CODE_DT', how='left')
 DATA['POS_CODE_KEYWORD'] = 'unchanged'
 
 # now we can prepare a list of keywords, using names of columns from XLS file:
-KEYWORDS_LIST = list(KEYWORD_MATRIX.columns)
+KEYWORDS_LIST = list(map(lambda i:i.upper(), KEYWORD_MATRIX.columns))
 KEYWORDS_LIST.remove('POS_CODE_DT')
 
 # we will check POSDATA by list of YTITLE fragments that may require rematching
 # and create dictionaries allowing us to find new POS_CODES.
 # In case of YOUR_TITLE containing multiple words from list, the LAST match
-# will be used - we can also use only the FIRST one by using 99th line of code.
-print('      looping through data...')
+# will be used - we can also use only the FIRST one by using 94th line of code
+print('      creating dictionary...')
 
 DATA_MERGER = pd.DataFrame()
 for i in KEYWORDS_LIST:
-    YTITLES = set([y for y in DATA.YOUR_TITLE if title_check(y, i)])
+    YTITLE = set([title for title in DATA.YOUR_TITLE if title_check(title, i)])
     LOOKUP = KEYWORD_MATRIX.set_index('POS_CODE_DT')[i].to_dict()
-    DATA_FILTER = DATA[DATA.YOUR_TITLE.isin(list(YTITLES))]
+    DATA_FILTER = DATA[DATA.YOUR_TITLE.isin(list(YTITLE))]
 #    DATA_FILTER = DATA_FILTER[DATA_FILTER.POS_CODE_KEYWORD == 'unchanged']
     if DATA_FILTER.OBJECTID.size != 0:
         DATA_FILTER['POS_CODE_KEYWORD'] = DATA.POS_CODE_DT.map(LOOKUP)
     DATA_MERGER = DATA_MERGER.append(DATA_FILTER)
 
-
 DATA_MERGER = DATA_MERGER[DATA_MERGER.POS_CODE_KEYWORD != 'unchanged']
 LOOKUP = DATA_MERGER.set_index('OBJECTID')['POS_CODE_KEYWORD'].to_dict()
 DATA['POS_CODE_KEYWORD'] = DATA.OBJECTID.map(LOOKUP)
-del DATA_MERGER
+del DATA_MERGER, DATA_FILTER, LOOKUP
+
 
 ###############################################################################
 #                                                                             #
@@ -123,15 +119,14 @@ DATA = pd.merge(DATA, CARE_TYPE_MATRIX, on='POS_CODE_DT', how='left')
 # it will be displaying lack of changes:
 DATA['POS_CODE_CARE'] = 'unchanged'
 
-# now we can prepare a list of care type options, using names of columns from
-# XLS file:
+# then prepare a list of care type options, using column names from XLS file:
 CARE_TYPE_LIST = list(CARE_TYPE_MATRIX.columns)
 CARE_TYPE_LIST.remove('POS_CODE_DT')
 
 # as care types are integers, we do not have to use separate function verifying
 # parts of strings etc - instead we can lookup incumbents by their 
 # ORGDATA_TYPE_CARE, using similar dictionaries as for keywords:
-print('      looping through data...')
+print('      creating dictionary...')
 
 DATA_MERGER = pd.DataFrame()
 for i in CARE_TYPE_LIST:
@@ -144,7 +139,7 @@ for i in CARE_TYPE_LIST:
 DATA_MERGER = DATA_MERGER[DATA_MERGER.POS_CODE_CARE != 'unchanged']
 LOOKUP = DATA_MERGER.set_index('OBJECTID')['POS_CODE_CARE'].to_dict()
 DATA['POS_CODE_CARE'] = DATA.OBJECTID.map(LOOKUP)
-del DATA_MERGER
+del DATA_MERGER, DATA_FILTER, LOOKUP
 
 
 ###############################################################################
@@ -185,34 +180,3 @@ DATA_C.rename(columns={'OBJECTID': 'ObjID', 'POS_CODE_CARE': 'POS_CODE_DT'},
 DATA_C.to_csv('by_care_type_import.csv', index=False, encoding='utf-8')
 
 print('\n   done')
-
-#def title_check1(ytitle, keyword):         # zwraca uwagę na różnicę z początku
-#    return f' {keyword}' in f' {ytitle}'
-#
-#title_check1('CEO PHH', 'HH')                           #False
-#title_check1('HOME CARE SPECIALIST', 'HOME')            #True
-#title_check1('MEDICAL OFFICER JR', 'MEDICAL OFFICE')    #True
-#
-#
-#def title_check2(ytitle, keyword):              # najwybredniejsze
-#    return f' {keyword} ' in f' {ytitle} '
-#
-#title_check2('CEO PHH', 'HH')                           #False
-#title_check2('HOME CARE SPECIALIST', 'HOME')            #True
-#title_check2('MEDICAL OFFICER JR', 'MEDICAL OFFICE')    #False
-#
-#
-#def title_check3(ytitle, keyword):              # najbliższe GST
-#    return f'{keyword}' in f'{ytitle}'
-#
-#title_check3('CEO PHH', 'HH')                           #True
-#title_check3('HOME CARE SPECIALIST', 'HOME')            #True
-#title_check3('MEDICAL OFFICER JR', 'MEDICAL OFFICE')    #True
-#
-#
-#def title_check4(ytitle, keyword):      # zwraca uwagę na różnicę z końca
-#    return f'{keyword} ' in f'{ytitle} '
-#
-#title_check4('CEO PHH', 'HH')                           #True
-#title_check4('HOME CARE SPECIALIST', 'HOME')            #True
-#title_check4('MEDICAL OFFICER JR', 'MEDICAL OFFICE')    #False
