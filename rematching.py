@@ -30,6 +30,7 @@ def integer_convert(i):
         return int(i)
     except (ValueError, TypeError):
         return i
+
 # 2) function that will lookup keywords in POSDATA.YOUR_TITLE:
 def title_check(ytitle, keyword):
     return f'{keyword}' in f'{ytitle}'
@@ -76,13 +77,13 @@ DATA = pd.merge(DATA, KEYWORD_MATRIX, on='POS_CODE_DT', how='left')
 DATA['POS_CODE_KEYWORD'] = 'unchanged'
 
 # now we can prepare a list of keywords, using names of columns from XLS file:
-KEYWORDS_LIST = list(map(lambda i:i.upper(), KEYWORD_MATRIX.columns))
+KEYWORDS_LIST = list(map(lambda i: i.upper(), KEYWORD_MATRIX.columns))
 KEYWORDS_LIST.remove('POS_CODE_DT')
 
 # we will check POSDATA by list of YTITLE fragments that may require rematching
 # and create dictionaries allowing us to find new POS_CODES.
 # In case of YOUR_TITLE containing multiple words from list, the LAST match
-# will be used - we can also save only the FIRST one by using 93rd line of code
+# will be used - we can also save only the FIRST one by using 94th line of code
 print('      creating dictionary...')
 
 DATA_MERGER = pd.DataFrame()
