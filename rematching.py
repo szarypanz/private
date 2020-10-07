@@ -123,7 +123,7 @@ CARE_TYPE_LIST = list(CARE_TYPE_MATRIX.columns)
 CARE_TYPE_LIST.remove('POS_CODE_DT')
 
 # as care types are integers, we do not have to use separate function verifying
-# parts of strings etc - instead we can lookup incumbents by their 
+# parts of strings etc - instead we can lookup incumbents by their
 # ORGDATA_TYPE_CARE, using similar dictionaries as for keywords:
 print('      creating dictionary...')
 
@@ -153,8 +153,8 @@ print('\n      preparing final excel files...')
 # before saving the file we can reposition the columns for better readability:
 KEYWORD_COL = DATA.pop('POS_CODE_KEYWORD')
 CARE_COL = DATA.pop('POS_CODE_CARE')
-DATA.insert(5, "POS_CODE_KEYWORD", KEYWORD_COL)
-DATA.insert(6, "POS_CODE_CARE", CARE_COL)
+DATA.insert(5, 'POS_CODE_KEYWORD', KEYWORD_COL)
+DATA.insert(6, 'POS_CODE_CARE', CARE_COL)
 del KEYWORD_COL, CARE_COL
 
 # we add final conversions to ensure that all numeric POS_CODEs are integers:
